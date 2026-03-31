@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(touch:*)",
+      "Bash(ls:*)",
+      "Bash(tree:*)",
+      "Bash(mv:*)",
+      "Bash(cp:*)",
+      "Bash(cat:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(echo:*)",
+      "Bash(do)",
+      "Bash(then)",
+      "Bash(else)",
+      "Bash(fi)",
+      "Bash(done)",
+      "Bash(for:*)",
+      "Bash(pip install:*)",
+      "Bash(pip check:*)",
+      "Bash(pip list:*)",
+      "Bash(uv pip install:*)",
+      "Bash(uv pip sync:*)",
+      "Bash(python -c:*)",
+      "Bash(python -m pytest:*)",
+      "Bash(pytest:*)",
+      "Bash(ruff check:*)",
+      "Bash(ruff format:*)",
+      "Bash(alembic:*)",
+      "Bash(uvicorn:*)",
+      "Bash(curl:*)",
+      "Bash(pkill:*)",
+      "Bash(true)"
+    ],
+    "deny": [
+      "Bash(sudo:*)",
+      "Bash(git reset:*)",
+      "Bash(git rebase:*)",
+      "Read(.env*)",
+      "Read(id_rsa)",
+      "Read(id_ed25519)",
+      "Read(**/*token*)",
+      "Read(**/*key*)",
+      "Write(.env*)",
+      "Write(**/secrets/**)",
+      "Bash(wget:*)"
+    ]
+  },
+  "autoUpdates": true,
+  "hooks": {
+    "Stop": [
+      {
+        "_comment": "高速チェック — 毎回必ず実行 (format / lint / tidy / build)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/format.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/lint.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/tidy.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/build.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
