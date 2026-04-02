@@ -3,7 +3,7 @@
 ## サービスの目的
 
 YouTube クリエイター向け AI サムネイル生成サービス **ThumbnailPot** の AI バックエンドサービス。
-Go バックエンド API（`thumbnailpot-back`）から VPC 内部で呼び出され、以下の AI 処理を担当する。
+Go バックエンド API（`thumbnailpod-back`）から VPC 内部で呼び出され、以下の AI 処理を担当する。
 
 - **画像生成**: DALL-E 3 / Stable Diffusion XL による 1280×720 サムネイル生成
 - **スタイル解析**: CLIP モデルによるカラーパレット抽出・構図分析・スタイル埋め込み生成
@@ -39,10 +39,10 @@ Go バックエンド API（`thumbnailpot-back`）から VPC 内部で呼び出�
 Internet
   │
   ▼
-Go バックエンド API（thumbnailpot-back）  ← ユーザー向け公開 API
+Go バックエンド API（thumbnailpod-back）  ← ユーザー向け公開 API
   │  VPC 内部通信（X-Internal-Secret ヘッダー）
   ▼
-Python AI サービス（thumbnailpot-ai）  ← このリポジトリ（内部専用）
+Python AI サービス（thumbnailpod-ai）  ← このリポジトリ（内部専用）
   │
   ├── OpenAI API（DALL-E 3）
   ├── AWS S3（画像・PSD ファイル保存）

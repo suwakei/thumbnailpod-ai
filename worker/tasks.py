@@ -24,11 +24,16 @@ async def handle_generate(body: dict) -> None:
 
     service = StableDiffusionService()
 
-    # Load LoRA adapter if style_model_id provided (Phase 2)
+    # Load LoRA adapter if style_model_id provided
     if req.style_model_id:
         await _load_lora_adapter(service, req.style_model_id)
 
-    await service.generate(req)
+    try:
+        await service.generate(req)
+    finally:
+        # Cleanup LoRA weights after generation
+        if req.style_model_id:
+            service.unload_lora()
 
 
 async def handle_style_train(body: dict) -> None:
@@ -46,10 +51,32 @@ async def handle_style_train(body: dict) -> None:
 
 async def _load_lora_adapter(service, style_model_id: UUID) -> None:
     """Download LoRA weights from S3 and load into the pipeline."""
+    import tempfile  # noqa: PLC0415
+    from pathlib import Path  # noqa: PLC0415
+
     s3 = S3Client()
     lora_key = f"lora-models/{style_model_id}/adapter.safetensors"
-    # TODO: download to tmp path and load into pipeline
-    logger.info("LoRA adapter load (stub) key=%s", lora_key)
+
+    # Check local cache first
+    cache_dir = Path(tempfile.gettempdir()) / "lora_cache" / str(style_model_id)
+    adapter_path = cache_dir / "adapter_model.safetensors"
+
+    if not adapter_path.exists():
+        logger.info("LoRA adapter cache miss, downloading key=%s", lora_key)
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        url = await s3.generate_presigned_url(lora_key)
+
+        import httpx  # noqa: PLC0415
+
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(url, timeout=60)
+            resp.raise_for_status()
+        adapter_path.write_bytes(resp.content)
+    else:
+        logger.info("LoRA adapter cache hit path=%s", adapter_path)
+
+    # Load into pipeline
+    service.load_lora(str(cache_dir))
 
 
 async def _run_style_ref_training(body: dict) -> None:
@@ -74,12 +101,27 @@ async def _run_style_ref_training(body: dict) -> None:
 async def _run_lora_training(body: dict) -> None:
     """Phase 2: LoRA fine-tuning with Diffusers + PEFT.
 
-    Runs on AI Worker with GPU (2 vCPU / 4 GB, or GPU Spot Instance for Phase 3).
+    Runs on AI Worker with GPU.
     """
-    logger.info("LoRA training start style_model_id=%s", body.get("style_model_id"))
-    # TODO: implement DreamBooth / LoRA training pipeline
-    # 1. Download images from S3
-    # 2. Prepare dataset
-    # 3. Run training loop (diffusers + peft)
-    # 4. Save adapter weights to S3 under lora-models/{style_model_id}/
-    raise NotImplementedError("LoRA training not yet implemented (Phase 2)")
+    from uuid import UUID as _UUID  # noqa: PLC0415
+
+    from app.services.style.lora_trainer import LoRATrainer  # noqa: PLC0415
+
+    style_model_id = _UUID(body["style_model_id"])
+    user_id = _UUID(body["user_id"])
+    image_urls = body["image_urls"]
+
+    logger.info(
+        "LoRA training start style_model_id=%s images=%d",
+        style_model_id,
+        len(image_urls),
+    )
+
+    trainer = LoRATrainer()
+    s3_key = await trainer.train(style_model_id, user_id, image_urls)
+
+    # Update style_model status and s3_key via DB
+    from app.infrastructure.database import update_style_model_status  # noqa: PLC0415
+
+    await update_style_model_status(style_model_id, "ready", s3_key=s3_key)
+    logger.info("LoRA training complete style_model_id=%s", style_model_id)

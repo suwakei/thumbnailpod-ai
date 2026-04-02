@@ -137,7 +137,7 @@ ThumbnailPot AI Backend は、YouTube クリエイター向けサービス **Thu
 ## ディレクトリ構成
 
 ```
-thumbnailpot-ai/
+thumbnailpod-ai/
 ├── app/
 │   ├── main.py                        # FastAPI アプリ初期化・ルーター登録
 │   ├── api/
@@ -218,7 +218,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 ```bash
 git clone <repository-url>
-cd thumbnailpot-ai
+cd thumbnailpod-ai
 ```
 
 #### 2. 環境変数の設定
@@ -232,9 +232,9 @@ cp .env.example .env
 ```dotenv
 OPENAI_API_KEY=sk-...          # OpenAI API キー
 INTERNAL_API_SECRET=any-secret # 任意の文字列 (ローカル開発時は何でも可)
-DATABASE_URL=postgresql://thumbnailpot:thumbnailpot@localhost:5432/thumbnailpot
-S3_BUCKET=thumbnailpot-local
-SQS_QUEUE_URL=http://localhost:4566/000000000000/thumbnailpot-style-training
+DATABASE_URL=postgresql://thumbnailpod:thumbnailpod@localhost:5432/thumbnailpod
+S3_BUCKET=thumbnailpod-local
+SQS_QUEUE_URL=http://localhost:4566/000000000000/thumbnailpod-style-training
 ```
 
 > **Note:** ローカル環境では S3 / SQS は LocalStack で代替します。実際の AWS 認証情報は不要です。

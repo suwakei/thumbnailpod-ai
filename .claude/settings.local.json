@@ -2,8 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(pip install:*)",
-      "Bash(rm -f \"/c/Users/ns072/dev/service/backend/thumbnailpot-ai/.claude/rules/go-rules.md\")",
-      "Bash(rm -rf \"/c/Users/ns072/dev/service/backend/thumbnailpot-ai/.claude/docs/03-library-docs/\")"
+      "Bash(rm -f \"/c/Users/ns072/dev/service/backend/thumbnailpod-ai/.claude/rules/go-rules.md\")",
+      "Bash(rm -rf \"/c/Users/ns072/dev/service/backend/thumbnailpod-ai/.claude/docs/03-library-docs/\")"
     ]
   }
 }

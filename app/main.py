@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from app.api.internal import generate, jobs, psd, segment, style
+from app.api.internal import edit, generate, jobs, psd, segment, style
 from app.core.config import settings
 from app.core.logging import setup_logging
 
@@ -27,6 +27,7 @@ app.include_router(style.router, prefix="/internal/style")
 app.include_router(jobs.router, prefix="/internal")
 app.include_router(segment.router, prefix="/internal")
 app.include_router(psd.router, prefix="/internal")
+app.include_router(edit.router, prefix="/internal")
 
 
 @app.get("/health")

@@ -9,6 +9,7 @@ aioboto3>=13.0
 
 # Database
 asyncpg>=0.30
+psycopg2-binary>=2.9
 alembic>=1.13
 sqlalchemy>=2.0
 

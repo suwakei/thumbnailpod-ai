@@ -54,3 +54,25 @@ async def update_job_status(
         error_message,
     )
     logger.debug("Job %s status -> %s", job_id, status)
+
+
+async def update_style_model_status(
+    style_model_id: UUID,
+    status: str,
+    s3_key: str | None = None,
+) -> None:
+    pool = await get_pool()
+    if s3_key:
+        await pool.execute(
+            "UPDATE style_models SET status = $2, s3_key = $3, updated_at = NOW() WHERE id = $1",
+            style_model_id,
+            status,
+            s3_key,
+        )
+    else:
+        await pool.execute(
+            "UPDATE style_models SET status = $2, updated_at = NOW() WHERE id = $1",
+            style_model_id,
+            status,
+        )
+    logger.debug("StyleModel %s status -> %s", style_model_id, status)

@@ -52,6 +52,18 @@ class StableDiffusionService:
             height=req.height,
         )
 
+    def load_lora(self, adapter_dir: str) -> None:
+        """Load LoRA adapter weights into the pipeline."""
+        pipe = self._load_pipeline()
+        pipe.load_lora_weights(adapter_dir)
+        logger.info("LoRA adapter loaded from %s", adapter_dir)
+
+    def unload_lora(self) -> None:
+        """Unload LoRA adapter weights from the pipeline."""
+        if self._pipe is not None:
+            self._pipe.unload_lora_weights()
+            logger.info("LoRA adapter unloaded")
+
     def _run_inference(self, req: GenerateRequest):
         pipe = self._load_pipeline()
         result = pipe(
