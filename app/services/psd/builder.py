@@ -9,6 +9,7 @@ from io import BytesIO
 from uuid import UUID
 
 import httpx
+from fastapi import HTTPException
 from PIL import Image
 
 from app.infrastructure.s3 import S3Client
@@ -30,15 +31,27 @@ class PSDBuilder:
         """Download layer PNGs, compose a PSD, upload to S3, return s3_key."""
         logger.info("PSD build start job_id=%s layers=%d", job_id, len(layer_s3_keys))
 
-        base_image = await self._fetch_image(base_image_url)
-        layer_images = await self._fetch_layer_images(layer_s3_keys)
+        try:
+            base_image = await self._fetch_image(base_image_url)
+            layer_images = await self._fetch_layer_images(layer_s3_keys)
+        except httpx.HTTPError as e:
+            logger.error("Image download failed job_id=%s: %s", job_id, e)
+            raise HTTPException(status_code=500, detail="Image download failed")
 
-        psd_bytes = await self._compose_psd(base_image, layer_images)
+        try:
+            psd_bytes = await self._compose_psd(base_image, layer_images)
+        except Exception as e:
+            logger.error("PSD composition failed job_id=%s: %s", job_id, e)
+            raise HTTPException(status_code=500, detail="PSD build failed")
 
         s3_key = f"thumbnails/{user_id}/{job_id}.psd"
-        await self._s3.upload_bytes(
-            data=psd_bytes, key=s3_key, content_type="image/vnd.adobe.photoshop"
-        )
+        try:
+            await self._s3.upload_bytes(
+                data=psd_bytes, key=s3_key, content_type="image/vnd.adobe.photoshop"
+            )
+        except Exception as e:
+            logger.error("S3 upload failed job_id=%s: %s", job_id, e)
+            raise HTTPException(status_code=500, detail="Storage upload failed")
 
         logger.info("PSD upload done job_id=%s s3_key=%s", job_id, s3_key)
         return s3_key
