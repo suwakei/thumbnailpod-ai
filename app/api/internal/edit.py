@@ -2,14 +2,15 @@
 
 import logging
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
+from app.core.security import verify_internal_secret
 from app.schemas.edit import EditRequest, EditResponse
 from app.services.edit.editor import EditService
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(verify_internal_secret)])
 
 _editor = EditService()
 

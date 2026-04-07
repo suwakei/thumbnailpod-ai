@@ -9,6 +9,7 @@ import logging
 from io import BytesIO
 
 import httpx
+from fastapi import HTTPException
 from PIL import Image, ImageDraw, ImageEnhance, ImageFont
 
 from app.infrastructure.s3 import S3Client
@@ -34,7 +35,11 @@ class EditService:
             if label not in req.original_layers:
                 continue
             s3_key = req.original_layers[label]
-            layer_images[label] = await self._download_layer(s3_key)
+            try:
+                layer_images[label] = await self._download_layer(s3_key)
+            except httpx.HTTPError as e:
+                logger.error("Layer download failed job_id=%s label=%s: %s", req.job_id, label, e)
+                raise HTTPException(status_code=500, detail="Image download failed")
 
         # Apply operations
         loop = asyncio.get_event_loop()
@@ -42,24 +47,32 @@ class EditService:
             if op.layer not in layer_images:
                 continue
             img = layer_images[op.layer]
-            layer_images[op.layer] = await loop.run_in_executor(
-                None, self._apply_operation, img, op
-            )
+            try:
+                layer_images[op.layer] = await loop.run_in_executor(
+                    None, self._apply_operation, img, op
+                )
+            except Exception as e:
+                logger.error("Edit operation failed job_id=%s op=%s: %s", req.job_id, op.type, e)
+                raise HTTPException(status_code=500, detail="Edit operation failed")
 
         # Recomposite
         composite = await self._recomposite(req, layer_images, unchanged)
 
         # Upload updated layers + composite
         updated_layers: dict[str, str] = {}
-        for label, img in layer_images.items():
-            s3_key = f"edited/{req.job_id}/{label}.png"
-            await self._upload_image(img, s3_key)
-            updated_layers[label] = s3_key
+        try:
+            for label, img in layer_images.items():
+                s3_key = f"edited/{req.job_id}/{label}.png"
+                await self._upload_image(img, s3_key)
+                updated_layers[label] = s3_key
 
-        # Upload composite
-        composite_key = f"edited/{req.job_id}/composite.png"
-        await self._upload_image(composite, composite_key)
-        updated_layers["composite"] = composite_key
+            # Upload composite
+            composite_key = f"edited/{req.job_id}/composite.png"
+            await self._upload_image(composite, composite_key)
+            updated_layers["composite"] = composite_key
+        except Exception as e:
+            logger.error("S3 upload failed job_id=%s: %s", req.job_id, e)
+            raise HTTPException(status_code=500, detail="Storage upload failed")
 
         logger.info("Edit done job_id=%s updated=%d", req.job_id, len(updated_layers))
         return EditResponse(

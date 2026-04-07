@@ -1,5 +1,7 @@
 import logging
 
+from fastapi import HTTPException
+
 from app.core.config import settings
 from app.infrastructure.s3 import S3Client
 from app.schemas.generate import GenerateRequest, GenerateResponse
@@ -37,12 +39,20 @@ class StableDiffusionService:
         import asyncio  # noqa: PLC0415
 
         loop = asyncio.get_event_loop()
-        image = await loop.run_in_executor(None, self._run_inference, req)
+        try:
+            image = await loop.run_in_executor(None, self._run_inference, req)
+        except Exception as e:
+            logger.error("SDXL inference failed job_id=%s: %s", req.job_id, e)
+            raise HTTPException(status_code=500, detail="Image generation failed")
 
-        s3_key = await self._s3.upload_image(
-            image=image,
-            key=f"thumbnails/{req.user_id}/{req.job_id}.png",
-        )
+        try:
+            s3_key = await self._s3.upload_image(
+                image=image,
+                key=f"thumbnails/{req.user_id}/{req.job_id}.png",
+            )
+        except Exception as e:
+            logger.error("S3 upload failed job_id=%s: %s", req.job_id, e)
+            raise HTTPException(status_code=500, detail="Storage upload failed")
 
         logger.info("SDXL generation done job_id=%s s3_key=%s", req.job_id, s3_key)
         return GenerateResponse(

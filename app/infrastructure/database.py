@@ -20,10 +20,17 @@ async def get_pool() -> asyncpg.Pool:
 
 async def get_job_status(job_id: UUID) -> JobStatusResponse:
     pool = await get_pool()
-    row = await pool.fetchrow(
-        "SELECT status, error_message FROM generation_jobs WHERE id = $1",
-        job_id,
-    )
+    try:
+        row = await pool.fetchrow(
+            "SELECT status, error_message FROM generation_jobs WHERE id = $1",
+            job_id,
+        )
+    except asyncpg.PostgresConnectionError as e:
+        logger.error("DB connection error: %s", e)
+        from fastapi import HTTPException  # noqa: PLC0415
+
+        raise HTTPException(status_code=503, detail="Database unavailable")
+
     if row is None:
         from fastapi import HTTPException  # noqa: PLC0415
 

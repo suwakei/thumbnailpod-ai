@@ -3,6 +3,7 @@ from io import BytesIO
 
 import httpx
 import numpy as np
+from fastapi import HTTPException
 from PIL import Image
 
 from app.core.config import settings
@@ -33,18 +34,32 @@ class SegmentService:
     async def segment(self, req: SegmentRequest) -> SegmentResponse:
         logger.info("SAM segment start job_id=%s", req.job_id)
 
-        async with httpx.AsyncClient() as client:
-            resp = await client.get(str(req.image_url), timeout=15)
-            resp.raise_for_status()
+        try:
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(str(req.image_url), timeout=15)
+                resp.raise_for_status()
+        except httpx.HTTPError as e:
+            logger.error("Image download failed job_id=%s: %s", req.job_id, e)
+            raise HTTPException(status_code=500, detail="Image download failed")
+
         image = Image.open(BytesIO(resp.content)).convert("RGB")
         image_np = np.array(image)
 
         import asyncio  # noqa: PLC0415
 
         loop = asyncio.get_event_loop()
-        masks = await loop.run_in_executor(None, self._run_sam, image_np)
+        try:
+            masks = await loop.run_in_executor(None, self._run_sam, image_np)
+        except Exception as e:
+            logger.error("SAM segmentation failed job_id=%s: %s", req.job_id, e)
+            raise HTTPException(status_code=500, detail="Segmentation failed")
 
-        layers = await self._upload_layers(masks, image, req)
+        try:
+            layers = await self._upload_layers(masks, image, req)
+        except Exception as e:
+            logger.error("S3 upload failed job_id=%s: %s", req.job_id, e)
+            raise HTTPException(status_code=500, detail="Storage upload failed")
+
         logger.info("SAM segment done job_id=%s layers=%d", req.job_id, len(layers))
         return SegmentResponse(job_id=req.job_id, layers=layers)
 

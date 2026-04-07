@@ -1,5 +1,6 @@
 import logging
 
+from fastapi import HTTPException
 from openai import AsyncOpenAI
 
 from app.core.config import settings
@@ -17,19 +18,27 @@ class DalleService:
     async def generate(self, req: GenerateRequest) -> GenerateResponse:
         logger.info("DALL-E 3 generation start job_id=%s", req.job_id)
 
-        response = await self._client.images.generate(
-            model="dall-e-3",
-            prompt=req.prompt,
-            size=f"{req.width}x{req.height}",
-            quality="hd",
-            n=1,
-        )
+        try:
+            response = await self._client.images.generate(
+                model="dall-e-3",
+                prompt=req.prompt,
+                size=f"{req.width}x{req.height}",
+                quality="hd",
+                n=1,
+            )
+        except Exception as e:
+            logger.error("DALL-E generation failed job_id=%s: %s", req.job_id, e)
+            raise HTTPException(status_code=500, detail="Image generation failed")
 
         image_url = response.data[0].url
-        s3_key = await self._s3.upload_from_url(
-            url=image_url,
-            key=f"thumbnails/{req.user_id}/{req.job_id}.png",
-        )
+        try:
+            s3_key = await self._s3.upload_from_url(
+                url=image_url,
+                key=f"thumbnails/{req.user_id}/{req.job_id}.png",
+            )
+        except Exception as e:
+            logger.error("S3 upload failed job_id=%s: %s", req.job_id, e)
+            raise HTTPException(status_code=500, detail="Storage upload failed")
 
         logger.info("DALL-E 3 generation done job_id=%s s3_key=%s", req.job_id, s3_key)
         return GenerateResponse(
