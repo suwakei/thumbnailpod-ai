@@ -7,7 +7,6 @@ then recomposites the final image.
 import asyncio
 import logging
 from io import BytesIO
-from uuid import UUID
 
 import httpx
 from PIL import Image, ImageDraw, ImageEnhance, ImageFont
@@ -27,9 +26,7 @@ class EditService:
 
         # Determine which layers are affected
         affected_labels = {op.layer for op in req.operations}
-        unchanged = [
-            label for label in req.original_layers if label not in affected_labels
-        ]
+        unchanged = [label for label in req.original_layers if label not in affected_labels]
 
         # Download affected layers
         layer_images: dict[str, Image.Image] = {}
@@ -123,9 +120,7 @@ class EditService:
         # Download unchanged layers for compositing
         for label in unchanged_labels:
             if label in req.original_layers and label != "composite":
-                all_images[label] = await self._download_layer(
-                    req.original_layers[label]
-                )
+                all_images[label] = await self._download_layer(req.original_layers[label])
 
         # Layer ordering
         order = ["background_layer", "person_layer", "text_layer", "effect_layer"]
@@ -166,6 +161,4 @@ class EditService:
         buf = BytesIO()
         img.save(buf, format="PNG")
         buf.seek(0)
-        await self._s3.upload_bytes(
-            data=buf.read(), key=s3_key, content_type="image/png"
-        )
+        await self._s3.upload_bytes(data=buf.read(), key=s3_key, content_type="image/png")

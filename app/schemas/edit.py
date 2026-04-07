@@ -30,15 +30,11 @@ class EditOperation(BaseModel):
 class EditRequest(BaseModel):
     job_id: UUID
     user_id: UUID
-    original_layers: dict[str, str] = Field(
-        ..., description="label -> s3_key mapping"
-    )
+    original_layers: dict[str, str] = Field(..., description="label -> s3_key mapping")
     operations: list[EditOperation] = Field(..., min_length=1)
 
 
 class EditResponse(BaseModel):
     job_id: UUID
-    layers: dict[str, str] = Field(
-        ..., description="Updated layers: label -> s3_key"
-    )
+    layers: dict[str, str] = Field(..., description="Updated layers: label -> s3_key")
     unchanged_layers: list[str]

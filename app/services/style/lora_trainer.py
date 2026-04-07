@@ -52,9 +52,7 @@ class LoRATrainer:
             output_dir = work_dir / "output"
             output_dir.mkdir()
             loop = asyncio.get_event_loop()
-            await loop.run_in_executor(
-                None, self._run_training, dataset_dir, output_dir
-            )
+            await loop.run_in_executor(None, self._run_training, dataset_dir, output_dir)
 
             # 4. Upload adapter to S3
             adapter_path = output_dir / "adapter_model.safetensors"
@@ -75,9 +73,7 @@ class LoRATrainer:
         finally:
             shutil.rmtree(work_dir, ignore_errors=True)
 
-    async def _download_images(
-        self, urls: list[str], dest_dir: Path
-    ) -> None:
+    async def _download_images(self, urls: list[str], dest_dir: Path) -> None:
         async with httpx.AsyncClient() as client:
             for i, url in enumerate(urls):
                 try:
@@ -126,11 +122,13 @@ class LoRATrainer:
 
         from torchvision import transforms  # noqa: PLC0415
 
-        transform = transforms.Compose([
-            transforms.Resize((1024, 1024)),
-            transforms.ToTensor(),
-            transforms.Normalize([0.5], [0.5]),
-        ])
+        transform = transforms.Compose(
+            [
+                transforms.Resize((1024, 1024)),
+                transforms.ToTensor(),
+                transforms.Normalize([0.5], [0.5]),
+            ]
+        )
 
         images = []
         for img_path in sorted(dataset_dir.glob("*.png")):
@@ -162,8 +160,11 @@ class LoRATrainer:
 
             # Predict noise
             encoder_hidden_states = torch.zeros(
-                1, 77, pipe.unet.config.cross_attention_dim,
-                device="cuda", dtype=torch.float16,
+                1,
+                77,
+                pipe.unet.config.cross_attention_dim,
+                device="cuda",
+                dtype=torch.float16,
             )
             added_cond_kwargs = {
                 "text_embeds": torch.zeros(1, 1280, device="cuda", dtype=torch.float16),
