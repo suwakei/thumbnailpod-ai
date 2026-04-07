@@ -1,8 +1,7 @@
 import logging
 
-from openai import AsyncOpenAI
-
 from fastapi import HTTPException
+from openai import AsyncOpenAI
 
 from app.core.config import settings
 from app.infrastructure.s3 import S3Client
