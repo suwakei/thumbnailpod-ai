@@ -1,7 +1,8 @@
-from app.schemas._compat import StrEnum
 from uuid import UUID
 
 from pydantic import BaseModel
+
+from app.schemas._compat import StrEnum
 
 
 class JobStatus(StrEnum):

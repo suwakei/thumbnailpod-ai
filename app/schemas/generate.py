@@ -1,7 +1,8 @@
-from app.schemas._compat import StrEnum
 from uuid import UUID
 
 from pydantic import BaseModel, Field
+
+from app.schemas._compat import StrEnum
 
 
 class GenerationEngine(StrEnum):
