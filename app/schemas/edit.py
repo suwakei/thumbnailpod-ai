@@ -1,6 +1,6 @@
 """Pydantic schemas for thumbnail editing."""
 
-from enum import StrEnum
+from app.schemas._compat import StrEnum
 from uuid import UUID
 
 from pydantic import BaseModel, Field

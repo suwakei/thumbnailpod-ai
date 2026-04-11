@@ -202,8 +202,8 @@ thumbnailpod-ai/
 以下がインストールされていることを確認してください。
 
 - **Docker Desktop** 4.x+
-- **Python 3.11+**
-- **uv** (パッケージマネージャー)
+- **Python 3.10+**（3.11+ 推奨。3.10 でも `strenum` パッケージにより動作する）
+- **uv** (パッケージマネージャー) または **pip**
 
 ```bash
 # uv のインストール (未インストールの場合)
@@ -253,8 +253,20 @@ docker-compose up -d postgres localstack
 #### 4. 依存パッケージのインストール
 
 ```bash
+# uv を使う場合:
 uv pip install -e ".[dev]"
+
+# pip を使う場合（venv 推奨）:
+python -m venv .venv
+# Linux/Mac:
+source .venv/bin/activate
+# Windows (Git Bash):
+source .venv/Scripts/activate
+pip install -r requirements.txt
 ```
+
+> **Python 3.10 の場合:** `StrEnum` は Python 3.11 で追加されたクラスですが、  
+> `app/schemas/_compat.py` の互換レイヤーにより `strenum` パッケージ（requirements.txt に含まれる）を自動で使うため、3.10 でも問題なく動作します。
 
 #### 5. DB マイグレーションの実行
 
