@@ -35,11 +35,12 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install uv
-        run: pip install uv
-
       - name: Install dependencies
-        run: uv pip install --system -e ".[dev]"
+        run: |
+          pip install \
+            fastapi pydantic pydantic-settings uvicorn \
+            httpx openai aioboto3 asyncpg Pillow numpy scikit-learn \
+            pytest pytest-asyncio ruff
 
       - name: Run tests
         env:
