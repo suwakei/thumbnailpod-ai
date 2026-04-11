@@ -1,7 +1,8 @@
-from app.schemas._compat import StrEnum
 from uuid import UUID
 
 from pydantic import BaseModel, Field, HttpUrl
+
+from app.schemas._compat import StrEnum
 
 
 class StyleMetadata(BaseModel):

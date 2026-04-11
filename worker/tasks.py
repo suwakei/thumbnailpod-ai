@@ -91,7 +91,7 @@ async def _run_style_ref_training(body: dict) -> None:
         image_urls=[AnyHttpUrl(u) for u in body["image_urls"]],
     )
     analyzer = StyleAnalyzer()
-    result = await analyzer.analyze(req)
+    await analyzer.analyze(req)
 
     # Persist style_metadata back to DB
     # TODO: update style_models.style_metadata via DB
