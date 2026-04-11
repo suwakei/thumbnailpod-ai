@@ -100,7 +100,6 @@ class PSDBuilder:
 
         # Add each segmented layer
         for label, img in reversed(layers):
-            pixel_layer = psd._record  # low-level access
             # psd-tools public API: use frompil
             from psd_tools.api.psd_image import PixelLayer  # noqa: PLC0415
 

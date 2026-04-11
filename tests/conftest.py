@@ -14,7 +14,7 @@ os.environ.setdefault("SQS_QUEUE_URL", "http://localhost:4566/test/queue")
 
 @pytest.fixture(scope="session")
 def client():
-    from app.main import app
+    from app.main import app  # noqa: PLC0415
 
     return TestClient(app)
 

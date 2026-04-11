@@ -39,7 +39,7 @@ def test_get_job_status_failed(client, internal_headers, sample_job_id):
 
 
 def test_get_job_not_found(client, internal_headers):
-    from fastapi import HTTPException
+    from fastapi import HTTPException  # noqa: PLC0415
 
     with patch(
         "app.api.internal.jobs.get_job_status",
