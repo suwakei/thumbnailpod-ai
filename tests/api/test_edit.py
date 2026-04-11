@@ -85,9 +85,7 @@ def test_edit_requires_auth(client, sample_job_id, sample_user_id):
             "job_id": sample_job_id,
             "user_id": sample_user_id,
             "original_layers": {"text_layer": "layers/text.png"},
-            "operations": [
-                {"type": "text_change", "layer": "text_layer", "content": "Hi"}
-            ],
+            "operations": [{"type": "text_change", "layer": "text_layer", "content": "Hi"}],
         },
     )
     assert response.status_code == 403
@@ -114,9 +112,7 @@ def test_edit_invalid_operation_type(client, internal_headers, sample_job_id, sa
             "job_id": sample_job_id,
             "user_id": sample_user_id,
             "original_layers": {"text_layer": "layers/text.png"},
-            "operations": [
-                {"type": "invalid_op", "layer": "text_layer"}
-            ],
+            "operations": [{"type": "invalid_op", "layer": "text_layer"}],
         },
         headers=internal_headers,
     )
