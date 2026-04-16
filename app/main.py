@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
 from fastapi import FastAPI
+from PIL import Image
 
 from app.api.internal import edit, generate, jobs, psd, segment, style
 from app.core.config import settings
@@ -22,6 +23,9 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     setup_logging()
+    # Cap PIL decode size to defuse decompression bomb payloads. Applies
+    # process-wide to every Image.open call across services and workers.
+    Image.MAX_IMAGE_PIXELS = settings.max_image_pixels
     yield
 
 

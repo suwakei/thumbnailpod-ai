@@ -2,10 +2,10 @@ import logging
 from io import BytesIO
 
 import aioboto3
-import httpx
 from PIL import Image
 
 from app.core.config import settings
+from app.core.security import fetch_remote_image_bytes
 
 logger = logging.getLogger(__name__)
 
@@ -15,10 +15,8 @@ class S3Client:
         self._session = aioboto3.Session()
 
     async def upload_from_url(self, url: str, key: str) -> str:
-        async with httpx.AsyncClient() as client:
-            resp = await client.get(url, timeout=30)
-            resp.raise_for_status()
-        return await self.upload_bytes(data=resp.content, key=key, content_type="image/png")
+        data = await fetch_remote_image_bytes(url)
+        return await self.upload_bytes(data=data, key=key, content_type="image/png")
 
     async def upload_image(self, image: Image.Image, key: str) -> str:
         buf = BytesIO()

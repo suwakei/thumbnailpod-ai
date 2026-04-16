@@ -29,5 +29,18 @@ class Settings(BaseSettings):
     image_width: int = 1280
     image_height: int = 720
 
+    # Image download safety (SSRF / DoS mitigation)
+    # Hosts whose https URLs are allowed as image sources. Suffix match on the
+    # URL hostname (case-insensitive). Defaults cover YouTube thumbnails and
+    # S3 presigned URLs. Override via ALLOWED_IMAGE_HOST_SUFFIXES env var as
+    # a comma-separated list.
+    allowed_image_host_suffixes: str = (
+        "ytimg.com,googleusercontent.com,amazonaws.com,blob.core.windows.net"
+    )
+    # Maximum bytes to read from a remote image URL before aborting.
+    max_image_download_bytes: int = 20 * 1024 * 1024
+    # Maximum pixel count for PIL decoding (decompression bomb guard).
+    max_image_pixels: int = 50_000_000
+
 
 settings = Settings()

@@ -10,6 +10,7 @@ import logging
 import signal
 
 import aioboto3
+from PIL import Image
 
 from app.core.config import settings
 from app.core.logging import setup_logging
@@ -81,6 +82,7 @@ class Worker:
 
 async def main() -> None:
     setup_logging()
+    Image.MAX_IMAGE_PIXELS = settings.max_image_pixels
     worker = Worker()
     signal.signal(signal.SIGTERM, worker.stop)
     signal.signal(signal.SIGINT, worker.stop)

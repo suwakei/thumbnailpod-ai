@@ -1,12 +1,12 @@
 import logging
 from io import BytesIO
 
-import httpx
 import numpy as np
 from fastapi import HTTPException
 from PIL import Image
 
 from app.core.config import settings
+from app.core.security import fetch_remote_image_bytes
 from app.infrastructure.s3 import S3Client
 from app.schemas.segment import Layer, SegmentRequest, SegmentResponse
 
@@ -35,14 +35,12 @@ class SegmentService:
         logger.info("SAM segment start job_id=%s", req.job_id)
 
         try:
-            async with httpx.AsyncClient() as client:
-                resp = await client.get(str(req.image_url), timeout=15)
-                resp.raise_for_status()
-        except httpx.HTTPError as e:
+            image_bytes = await fetch_remote_image_bytes(str(req.image_url), timeout=15.0)
+        except Exception as e:
             logger.error("Image download failed job_id=%s: %s", req.job_id, e)
             raise HTTPException(status_code=500, detail="Image download failed")
 
-        image = Image.open(BytesIO(resp.content)).convert("RGB")
+        image = Image.open(BytesIO(image_bytes)).convert("RGB")
         image_np = np.array(image)
 
         import asyncio  # noqa: PLC0415

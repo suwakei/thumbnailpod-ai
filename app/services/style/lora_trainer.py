@@ -12,10 +12,10 @@ from io import BytesIO
 from pathlib import Path
 from uuid import UUID
 
-import httpx
 from PIL import Image
 
 from app.core.config import settings
+from app.core.security import fetch_remote_image_bytes
 from app.infrastructure.s3 import S3Client
 
 logger = logging.getLogger(__name__)
@@ -74,15 +74,13 @@ class LoRATrainer:
             shutil.rmtree(work_dir, ignore_errors=True)
 
     async def _download_images(self, urls: list[str], dest_dir: Path) -> None:
-        async with httpx.AsyncClient() as client:
-            for i, url in enumerate(urls):
-                try:
-                    resp = await client.get(url, timeout=30)
-                    resp.raise_for_status()
-                    img = Image.open(BytesIO(resp.content)).convert("RGB")
-                    img.save(dest_dir / f"image_{i:04d}.png")
-                except Exception as e:
-                    logger.warning("Failed to download image %d: %s", i, e)
+        for i, url in enumerate(urls):
+            try:
+                data = await fetch_remote_image_bytes(url)
+                img = Image.open(BytesIO(data)).convert("RGB")
+                img.save(dest_dir / f"image_{i:04d}.png")
+            except Exception as e:
+                logger.warning("Failed to download image %d: %s", i, e)
 
     def _prepare_dataset(self, dataset_dir: Path) -> None:
         """Resize all images to 1024x1024 for SDXL training."""

@@ -1,9 +1,9 @@
 import logging
 
-import httpx
 import numpy as np
 from PIL import Image
 
+from app.core.security import fetch_remote_image_bytes
 from app.schemas.style import StyleAnalyzeRequest, StyleAnalyzeResponse, StyleMetadata
 
 logger = logging.getLogger(__name__)
@@ -50,14 +50,12 @@ class StyleAnalyzer:
         return StyleAnalyzeResponse(style_metadata=metadata)
 
     async def _fetch_images(self, urls: list) -> list[Image.Image]:
-        images = []
-        async with httpx.AsyncClient() as client:
-            for url in urls:
-                resp = await client.get(str(url), timeout=10)
-                resp.raise_for_status()
-                from io import BytesIO  # noqa: PLC0415
+        from io import BytesIO  # noqa: PLC0415
 
-                images.append(Image.open(BytesIO(resp.content)).convert("RGB"))
+        images = []
+        for url in urls:
+            data = await fetch_remote_image_bytes(str(url), timeout=10.0)
+            images.append(Image.open(BytesIO(data)).convert("RGB"))
         return images
 
     def _extract_color_palette(self, images: list[Image.Image]) -> list[str]:
